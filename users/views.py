@@ -21,27 +21,35 @@ class RegisterView (APIView):
  
     
 class LoginVeiw(APIView):
-    def post(self,request):
+    def post(self, request):
         phone = request.data.get('phone')
-        password = request.data.get('password')
+        role = request.data.get('role')
 
-        #find user by phone
+        # Validate required fields
+        if not phone or not role:
+            return Response(
+                {"error": "phone and role are required"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Find user with matching phone + role
         try:
-            user = User.objects.get(phone = phone)
+            user = User.objects.get(phone=phone, role=role)
         except User.DoesNotExist:
-            return Response({"error":"invald phone or password"},status=status.HTTP_400_BAD_REQUEST)
-        # verfy password
-        if check_password(password,user.password):
-            return Response({
-                "message":"Login Successfuly",
-                "user":{
-                    "id":user.id,
-                    "name":user.name,
-                    "role":user.role
-                }
-            })
-        return Response({"error":"Invalid phone  or password"},status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"error": "invalid phone or role"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
+        # Successful login
+        return Response({
+            "message": "Login successfully",
+            "user": {
+                "id": user.id,
+                "name": user.name,
+                "role": user.role
+            }
+        }, status=status.HTTP_200_OK)
 
 class UserList(APIView):
     def get(self,request):
